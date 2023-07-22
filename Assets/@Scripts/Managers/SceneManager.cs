@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
@@ -23,7 +24,7 @@ public class SceneManager : MonoBehaviour
     }
 
     private float _timeout = 10f;
-
+    
     public void LoadScene(string name, LoadSceneMode mode = LoadSceneMode.Additive)
     {
         UnityEngine.SceneManagement.SceneManager.LoadScene(name, mode);
@@ -63,9 +64,12 @@ public class SceneManager : MonoBehaviour
             Debug.LogWarning("LoadScene Timeout !!");
             yield break;
         }
-        
-        // 이전 씬 종료
-        UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(prev);
+
+        // 다음 씬 활성화
+        nextOperation.allowSceneActivation = true;
+
+        // 이전 씬 비활성화
+         UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(prev);
         
         // TODO : 로드/언로드 로직 개선 필요
     }
