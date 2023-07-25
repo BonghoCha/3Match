@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Palmmedia.ReportGenerator.Core.Parser.Analysis;
+using Unity.VisualScripting;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -23,7 +24,7 @@ public class GameBoard : MonoBehaviour
         {
             for (int x = 0; x < XAxisLength; x++)
             {
-                var index = (XAxisLength * y) + x;
+                var index = GetIndex(x, y);
                 _gameBoardElementList[index].SetInfo(x, y);
             }
         }
@@ -35,9 +36,30 @@ public class GameBoard : MonoBehaviour
         return _gameBoardElementList[index];
     }
 
-    public void Test(int x, int y)
+    public void Swap(GameBoardElement a, GameBoardElement b)
     {
-        var element = GetElement(x, y);
-        element.Test();
+        var pointA = a.GetPoint();
+        var pointB = b.GetPoint();
+
+        int aX = pointA.x;
+        int aY = pointA.y;
+        
+        int bX = pointB.x;
+        int bY = pointB.y;
+        
+        var temp = _gameBoardElementList[GetIndex(aX, aY)];
+        _gameBoardElementList[GetIndex(aX, aY)] = _gameBoardElementList[GetIndex(bX, bY)];
+        _gameBoardElementList[GetIndex(bX, bY)] = temp;
+        
+        b.SetInfo(aX, aY);
+        a.SetInfo(bX, bY);
+        
+        a.Move(b.GetPosition());
+        b.Move(a.GetPosition());
+    }
+
+    private int GetIndex(int x, int y)
+    {
+        return (XAxisLength * y) + x;
     }
 }

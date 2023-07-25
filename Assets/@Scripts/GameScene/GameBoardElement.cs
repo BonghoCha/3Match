@@ -22,25 +22,34 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
     }
     
     [SerializeField] private Image _background;
+    [SerializeField] private Image _highlight;
     private Color _color;
     
     private Vector2 _touchPoint;
     private float _minMagnitude = 20f;
 
+    private bool _isClicked = false;
+    public bool IsMoving = false;
+
     [SerializeField] private Point _point = new Point();
 
-    public void SetInfo(int x, int y)
-    {
-        _point.SetInfo(x, y);
-    }
-    
     public void OnPointerDown(PointerEventData eventData)
     {
+        if (_isClicked) return;
+        if (IsMoving) return;
+        
+        _isClicked = true;
+        
         _touchPoint = eventData.position;
+        
+        _highlight.gameObject.SetActive(true);
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
+        if (!_isClicked) return;
+        if (IsMoving) return;
+        
         var touchPoint = eventData.position;
 
         var dir = (touchPoint - _touchPoint).normalized;
@@ -83,41 +92,42 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
             var board = FindObjectOfType<GameBoard>();
             
             var next = board.GetElement(_point.x + x, _point.y + y);
-            Swap(next);
+            if (!next.IsMoving)
+            {
+                board.Swap(this, next);    
+            }
         }
+
+        _highlight.gameObject.SetActive(false);
+        _isClicked = false;
     }
     
-    public void Test()
+    public void SetInfo(int x, int y)
     {
-        var sequence = DOTween.Sequence();
-        sequence.Append(_background.DOColor(new Color(0, 0, 255), 1f));
-        sequence.Append(_background.DOColor(new Color(255, 0, 0), 1f));
-        sequence.Play();
+        _point.SetInfo(x, y);
+    }
+    
+    public void SetColor(Color color)
+    {
+        _background.color = color;
     }
 
+    public void Move(Vector2 pos)
+    {
+        IsMoving = true;
+        GetComponent<RectTransform>().DOAnchorPos(pos, 0.5f).OnComplete(() =>
+        {
+            IsMoving = false;
+        });
+    }
+    
     public Vector2 GetPosition()
     {
         return GetComponent<RectTransform>().localPosition;
     }
 
-    public void Swap(GameBoardElement element)
+    public Point GetPoint()
     {
-        int x1 = element._point.x;
-        int y1 = element._point.y;
-        element.SetInfo(_point.x, _point.y);
-        SetInfo(x1, y1);
-        
-        Move(element.GetPosition());
-        element.Move(GetPosition());
-    }
-    
-    public void Move(Vector2 pos)
-    {
-        GetComponent<RectTransform>().DOAnchorPos(pos, 0.5f);
-    }
-
-    public void SetColor(Color color)
-    {
-        _background.color = color;
+        return _point;
     }
 }
