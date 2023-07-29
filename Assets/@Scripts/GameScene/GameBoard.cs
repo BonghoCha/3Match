@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Palmmedia.ReportGenerator.Core.Parser.Analysis;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.AI;
 using Random = UnityEngine.Random;
 
 public class GameBoard : MonoBehaviour
@@ -18,7 +19,7 @@ public class GameBoard : MonoBehaviour
     public List<int> _gameTable = new List<int>();
     private List<int> _idList = new List<int>() { 1, 2, 3, 4, 5 };
     
-    private List<Color32> _colorList = new List<Color32>()
+    [SerializeField] private List<Color32> _colorList = new List<Color32>()
     {
         new Color32(200, 50, 50, 255),
         new Color32(50, 200, 50, 255),
@@ -48,9 +49,19 @@ public class GameBoard : MonoBehaviour
                 _gameTable.Add(id);
             }
         }
+        
+        for (int y = 0; y < YAxisLength; y++)
+        {
+            for (int x = 0; x < XAxisLength; x++)
+            {
+                int index = GetIndex(x, y);
+                if (_gameTable[index] == -1) continue;
+                IsMatch(x, y);
+            }
+        }
     }
 
-    public void Swap(GameBoardElement a, GameBoardElement b)
+    public void Swap(GameBoardElement a, GameBoardElement b, Action onCallback = null)
     {
         var pointA = a.GetPoint();
         var pointB = b.GetPoint();
@@ -68,7 +79,7 @@ public class GameBoard : MonoBehaviour
         b.SetInfo(aX, aY);
         a.SetInfo(bX, bY);
         
-        a.Move(b.GetPosition());
+        a.Move(b.GetPosition(), onCallback);
         b.Move(a.GetPosition());
 
         int index1 = GetIndex(aX, aY);
@@ -131,23 +142,120 @@ public class GameBoard : MonoBehaviour
         return false;
     }
 
-    private bool isMatch(int x, int y, CommonEnum.Direction direction)
+    public bool IsMatch(int x, int y)
     {
-        if (direction == CommonEnum.Direction.HORIZONTAL)
+        int index = GetIndex(x, y);
+        int id = _gameTable[index];
+        
+        bool left = true;
+        bool right = true;
+        bool up = true;
+        bool down = true;
+
+        List<int> leftRemoveList = new List<int>();
+        List<int> rightRemoveList = new List<int>();
+        List<int> upRemoveList = new List<int>();
+        List<int> downRemoveList = new List<int>();
+
+        int count = 1;
+        while (left || right || up || down)
         {
-            
-        } 
-        else if (direction == CommonEnum.Direction.VERTICAL)
-        {
-            
+            if (left)
+            {
+                int leftIndex = isSameLine(x, y, x - count, y) ? GetIndex(x - count, y) : -1;
+                if (leftIndex == -1 || !isValid(x - count, y) || _gameTable[leftIndex] != id)
+                {
+                    left = false;
+                }
+                else
+                {
+                    Debug.Log(_gameTable[leftIndex] + "," + id);
+                    if (_gameTable[leftIndex] == id)
+                    {
+                        leftRemoveList.Add(leftIndex);
+                    }
+                }
+            }
+
+            if (right)
+            {
+                int rightIndex = isSameLine(x, y, x + count, y) ? GetIndex(x + count, y) : -1;
+                if (rightIndex == -1 || !isValid(x + count, y)|| _gameTable[rightIndex] != id)
+                {
+                    right = false;
+                }
+                else
+                {
+                    if (_gameTable[rightIndex] == id)
+                    {
+                        rightRemoveList.Add(rightIndex);
+                    }
+                }
+            }
+
+            if (up)
+            {
+                int upIndex = isSameLine(x, y, x, y - count) ? GetIndex(x, y - count) : -1;
+                if (upIndex == -1 || !isValid(x, y - count)|| _gameTable[upIndex] != id)
+                {
+                    up = false;
+                }
+                else
+                {
+                    if (_gameTable[upIndex] == id)
+                    {
+                        upRemoveList.Add(upIndex);
+                    }
+                }
+            }
+
+            if (down)
+            {
+                int downIndex = isSameLine(x, y, x, y + count) ? GetIndex(x, y + count) : -1;
+                if (downIndex == -1 || !isValid(x, y + count)|| _gameTable[downIndex] != id)
+                {
+                    down = false;
+                }
+                else
+                {
+                    if (_gameTable[downIndex] == id)
+                    {
+                        downRemoveList.Add(downIndex);
+                    }
+                }
+            }
+
+            count++;
         }
 
+        List<int> removeList = new List<int>();
+        if (leftRemoveList.Count + rightRemoveList.Count >= 2)
+        {
+            removeList.AddRange(leftRemoveList);
+            removeList.AddRange(rightRemoveList);
+        }
+        if (upRemoveList.Count + downRemoveList.Count >= 2)
+        {
+            removeList.AddRange(upRemoveList);
+            removeList.AddRange(downRemoveList);
+        }
+        
+        if (removeList.Count > 0)
+        {
+            removeList.Add(index);
+        }
+        Debug.Log(removeList.Count);
+        for (int i = 0; i < removeList.Count; i++)
+        {
+            _gameBoardElementList[removeList[i]].SetColor(new Color32(0, 0, 0, 255));
+            _gameTable[removeList[i]] = -1;
+        }
         return false;
     }
 
     private bool isSameLine(int x1, int y1, int x2, int y2)
     {
-        if (x1 % XAxisLength == x2 % XAxisLength && y1 % YAxisLength == y2 % YAxisLength)
+        if (x1 % XAxisLength == x2 % XAxisLength || y1 % YAxisLength == y2 % YAxisLength)
         {
             return true;
         }

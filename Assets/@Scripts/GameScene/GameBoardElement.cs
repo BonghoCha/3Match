@@ -85,7 +85,10 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
             var next = board.GetElement(_point.x + x, _point.y + y);
             if (!next.IsMoving)
             {
-                board.Swap(this, next);    
+                board.Swap(this, next);
+
+                bool isMatched = false;
+                board.IsMatch(_point.x, _point.y);
             }
         }
 
@@ -109,7 +112,7 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
         _background.color = color;
     }
 
-    public void Move(Vector2 pos)
+    public void Move(Vector2 pos, Action onCallback = null)
     {
         IsMoving = true;
         GetComponent<RectTransform>().DOAnchorPos(pos, 0.5f).OnComplete(() =>
