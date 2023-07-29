@@ -2,27 +2,16 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
-    [Serializable]
-    public class Point
-    {
-        public int x;
-        public int y;
-
-        public void SetInfo(int x, int y)
-        {
-            this.x = x;
-            this.y = y;
-        }
-    }
-    
     [SerializeField] private Image _background;
     [SerializeField] private Image _highlight;
+    [SerializeField] private TextMeshProUGUI _idText;
     private Color _color;
     
     private Vector2 _touchPoint;
@@ -31,7 +20,9 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
     private bool _isClicked = false;
     public bool IsMoving = false;
 
-    [SerializeField] private Point _point = new Point();
+    private int _identity = -1;
+
+    [SerializeField] private CommonDefinition.Point _point = new CommonDefinition.Point();
 
     public void OnPointerDown(PointerEventData eventData)
     {
@@ -102,9 +93,15 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
         _isClicked = false;
     }
     
-    public void SetInfo(int x, int y)
+    public void SetInfo(int x, int y, int id = -1)
     {
         _point.SetInfo(x, y);
+
+        if (id != -1)
+        {
+            _identity = id;
+            _idText.text = id.ToString();
+        }
     }
     
     public void SetColor(Color color)
@@ -126,8 +123,13 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
         return GetComponent<RectTransform>().localPosition;
     }
 
-    public Point GetPoint()
+    public CommonDefinition.Point GetPoint()
     {
         return _point;
+    }
+
+    public int GetID()
+    {
+        return _identity;
     }
 }
