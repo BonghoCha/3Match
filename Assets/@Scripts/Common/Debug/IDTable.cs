@@ -20,6 +20,10 @@ public class IDTable : MonoBehaviour
         for (int i = 0; i < table.Count; i++)
         {
             _textList[i].text = table[i].ToString();
+            if (table[i] == -1)
+            {
+                _textList[i].color = new Color32(255, 0, 0, 255);
+            }
         }
     }
 }
