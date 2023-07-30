@@ -91,10 +91,11 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
             
             if (!next.IsMoving)
             {
-                board.Swap(this, next);
-
-                bool isMatched = false;
-                board.IsMatch(_point.x, _point.y);
+                board.Swap(this, next, () =>
+                {
+                    board.IsMatch(_point.x, _point.y);
+                    board.IsMatch(_point.x - x, _point.y - y);
+                });
             }
         }
 
@@ -124,6 +125,10 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
         GetComponent<RectTransform>().DOAnchorPos(pos, 0.5f).OnComplete(() =>
         {
             IsMoving = false;
+            if (onCallback != null)
+            {
+                onCallback();
+            }
         });
     }
     
