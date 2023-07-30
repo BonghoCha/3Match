@@ -240,11 +240,14 @@ public class GameBoard : MonoBehaviour
         {
             removeList.Add(index);
         }
-        Debug.Log(removeList.Count);
+        
         for (int i = 0; i < removeList.Count; i++)
         {
             _gameBoardElementList[removeList[i]].SetColor(new Color32(0, 0, 0, 255));
             _gameTable[removeList[i]] = -1;
+
+            Debug.Log(removeList[i] % XAxisLength);
+            FindObjectOfType<RemoveTable>().AddNumber(removeList[i] % XAxisLength);
         }
         return false;
     }
