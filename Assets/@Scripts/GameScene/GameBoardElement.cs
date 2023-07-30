@@ -25,6 +25,7 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
     public void OnPointerDown(PointerEventData eventData)
     {
         if (_isClicked) return;
+        if (_identity == -1) return;
         if (IsMoving) return;
         
         _isClicked = true;
@@ -38,7 +39,7 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
     {
         if (!_isClicked) return;
         if (IsMoving) return;
-        
+
         var touchPoint = eventData.position;
 
         var dir = (touchPoint - _touchPoint).normalized;
@@ -81,6 +82,13 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
             var board = FindObjectOfType<GameBoard>();
             
             var next = board.GetElement(_point.x + x, _point.y + y);
+            if (next.GetID() == -1)
+            {
+                _highlight.gameObject.SetActive(false);
+                _isClicked = false;
+                return;
+            }
+            
             if (!next.IsMoving)
             {
                 board.Swap(this, next);
@@ -129,6 +137,11 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
         return _point;
     }
 
+    public void SetID(int id)
+    {
+        _identity = id;
+    }
+    
     public int GetID()
     {
         return _identity;

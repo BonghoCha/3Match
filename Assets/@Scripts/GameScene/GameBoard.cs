@@ -143,6 +143,8 @@ public class GameBoard : MonoBehaviour
         int index = GetIndex(x, y);
         int id = _gameTable[index];
         
+        if (id == -1) return false;
+        
         bool left = true;
         bool right = true;
         bool up = true;
@@ -159,13 +161,12 @@ public class GameBoard : MonoBehaviour
             if (left)
             {
                 int leftIndex = isSameLine(x, y, x - count, y) ? GetIndex(x - count, y) : -1;
-                if (leftIndex == -1 || !isValid(x - count, y) || _gameTable[leftIndex] != id)
+                if (leftIndex == -1 || !isValid(x - count, y) || _gameTable[leftIndex] != id || _gameTable[leftIndex] == -1)
                 {
                     left = false;
                 }
                 else
                 {
-                    Debug.Log(_gameTable[leftIndex] + "," + id);
                     if (_gameTable[leftIndex] == id)
                     {
                         leftRemoveList.Add(leftIndex);
@@ -176,7 +177,7 @@ public class GameBoard : MonoBehaviour
             if (right)
             {
                 int rightIndex = isSameLine(x, y, x + count, y) ? GetIndex(x + count, y) : -1;
-                if (rightIndex == -1 || !isValid(x + count, y)|| _gameTable[rightIndex] != id)
+                if (rightIndex == -1 || !isValid(x + count, y)|| _gameTable[rightIndex] != id || _gameTable[rightIndex] == -1)
                 {
                     right = false;
                 }
@@ -192,7 +193,7 @@ public class GameBoard : MonoBehaviour
             if (up)
             {
                 int upIndex = isSameLine(x, y, x, y - count) ? GetIndex(x, y - count) : -1;
-                if (upIndex == -1 || !isValid(x, y - count)|| _gameTable[upIndex] != id)
+                if (upIndex == -1 || !isValid(x, y - count)|| _gameTable[upIndex] != id || _gameTable[upIndex] == -1)
                 {
                     up = false;
                 }
@@ -208,7 +209,7 @@ public class GameBoard : MonoBehaviour
             if (down)
             {
                 int downIndex = isSameLine(x, y, x, y + count) ? GetIndex(x, y + count) : -1;
-                if (downIndex == -1 || !isValid(x, y + count)|| _gameTable[downIndex] != id)
+                if (downIndex == -1 || !isValid(x, y + count)|| _gameTable[downIndex] != id || _gameTable[downIndex] == -1)
                 {
                     down = false;
                 }
@@ -244,9 +245,9 @@ public class GameBoard : MonoBehaviour
         for (int i = 0; i < removeList.Count; i++)
         {
             _gameBoardElementList[removeList[i]].SetColor(new Color32(0, 0, 0, 255));
+            _gameBoardElementList[removeList[i]].SetID(-1);
             _gameTable[removeList[i]] = -1;
 
-            Debug.Log(removeList[i] % XAxisLength);
             FindObjectOfType<RemoveTable>().AddNumber(removeList[i] % XAxisLength);
         }
         return false;
