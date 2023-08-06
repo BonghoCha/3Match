@@ -255,6 +255,9 @@ public class GameBoard : MonoBehaviour
 
     private bool isSameLine(int x1, int y1, int x2, int y2)
     {
+        if (x1 < 0 || x1 >= XAxisLength || x2 < 0 || x2 >= XAxisLength) return false;
+        if (y1 < 0 || y1 >= YAxisLength || y2 < 0 || y2 >= YAxisLength) return false;
+        
         if (x1 % XAxisLength == x2 % XAxisLength || y1 % YAxisLength == y2 % YAxisLength)
         {
             return true;
