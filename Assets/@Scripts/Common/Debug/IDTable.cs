@@ -22,6 +22,10 @@ public class IDTable : MonoBehaviour
             {
                 _textList[i].color = new Color32(255, 0, 0, 255);
             }
+            else
+            {
+                _textList[i].color = new Color32(0, 0, 0, 255);
+            }
         }
     }
 }

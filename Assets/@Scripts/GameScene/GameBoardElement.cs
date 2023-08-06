@@ -11,6 +11,11 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
     [SerializeField] private Image _highlight;
     [SerializeField] private TextMeshProUGUI _idText;
     private Color _color;
+
+    private RectTransform _rectTransform;
+    
+    private float _width;
+    private float _height;
     
     private Vector2 _touchPoint;
     private float _minMagnitude = 20f;
@@ -21,6 +26,13 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
     private int _identity = -1;
 
     [SerializeField] private CommonDefinition.Point _point = new CommonDefinition.Point();
+
+    private void Awake()
+    {
+        _rectTransform = GetComponent<RectTransform>();
+        _width = _rectTransform.sizeDelta.x;
+        _height = _rectTransform.sizeDelta.y;
+    }
 
     public void OnPointerDown(PointerEventData eventData)
     {
@@ -129,6 +141,23 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
             {
                 onCallback();
             }
+        });
+    }
+
+    [Tooltip("test")]
+    public void Test()
+    {
+        MoveY(-1);
+    }
+    public void MoveY(int num, Action onCallback = null)
+    {
+        IsMoving = true;
+
+        float diff = _rectTransform.localPosition.y - (num * _height);
+        GetComponent<RectTransform>().DOAnchorPosY(diff, 0.5f).OnComplete(() =>
+        {
+            _point += new CommonDefinition.Point(0, num);
+            IsMoving = false;
         });
     }
     

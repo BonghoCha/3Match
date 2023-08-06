@@ -26,7 +26,6 @@ public class GameBoard : MonoBehaviour
     
     private Dictionary<CommonDefinition.Point, GameBoardElement> _gameBoardElementDic = new Dictionary<CommonDefinition.Point, GameBoardElement>();
 
-
     private void Awake()
     {
         Initialize();
@@ -92,6 +91,11 @@ public class GameBoard : MonoBehaviour
     private int GetIndex(int x, int y)
     {
         return (XAxisLength * y) + x;
+    }
+    
+    private int GetIndex(CommonDefinition.Point point)
+    {
+        return (XAxisLength * point.y) + point.x;
     }
 
     public bool Check(GameBoardElement element1, GameBoardElement element2, CommonEnum.Direction direction)
@@ -246,13 +250,52 @@ public class GameBoard : MonoBehaviour
         {
             _gameBoardElementList[removeList[i]].SetColor(new Color32(0, 0, 0, 255));
             _gameBoardElementList[removeList[i]].SetID(-1);
+            _gameBoardElementList[removeList[i]].gameObject.SetActive(false);
             _gameTable[removeList[i]] = -1;
 
             FindObjectOfType<RemoveTable>().AddNumber(removeList[i] % XAxisLength);
         }
+
+        testList.AddRange(removeList);
+
         return false;
     }
 
+    public List<int> testList = new List<int>();
+    public void Test()
+    {
+        Debug.Log("실행 " + testList.Count);
+        for (int x = 0; x < XAxisLength; x++)
+        {
+            int num = 0;
+            for (int y = YAxisLength - 1; y >= 0; y--)
+            {
+                int index = GetIndex(x, y);
+                if (_gameBoardElementList[index].GetID() == -1)
+                {
+                    num++;
+                    continue;
+                }
+                
+                _gameBoardElementList[index].MoveY(num);
+            }
+        }
+
+        UpdateIDTable();
+    }
+
+    private void UpdateIDTable()
+    {
+        for (int i = 0; i < _gameBoardElementList.Count; i++)
+        {
+            int id = _gameBoardElementList[i].GetID();
+            int index = GetIndex(_gameBoardElementList[i].GetPoint());
+            if (id == -1) continue;
+            _gameTable[i] = -1;
+            _gameTable[index] = id;
+        }
+    }
+    
     private bool isSameLine(int x1, int y1, int x2, int y2)
     {
         if (x1 < 0 || x1 >= XAxisLength || x2 < 0 || x2 >= XAxisLength) return false;
