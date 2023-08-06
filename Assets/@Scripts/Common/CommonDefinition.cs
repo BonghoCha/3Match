@@ -8,8 +8,8 @@ public class CommonDefinition : MonoBehaviour
     [Serializable]
     public class Point
     {
-        public int x { get; set; }
-        public int y { get; set; }
+        public int x;
+        public int y;
 
         public Point() { }
         public Point(int x, int y)
@@ -22,5 +22,10 @@ public class CommonDefinition : MonoBehaviour
             this.x = x;
             this.y = y;
         }
+        
+        public static Point operator +(Point a) => a;
+        public static Point operator -(Point a) => new Point(-a.x, -a.y);
+        public static Point operator +(Point a, Point b) => new Point(a.x + b.x, a.y + b.y);
+        public static Point operator -(Point a, Point b) => new Point(a.x - b.x, a.y - b.y);
     }
 }
