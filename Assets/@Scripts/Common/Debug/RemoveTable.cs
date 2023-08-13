@@ -11,8 +11,8 @@ public class RemoveTable : MonoBehaviour
 
     public void AddNumber(int index)
     {
-        _numberList[index]++;
-        _textList[index].text = _numberList[index].ToString();
+//        _numberList[index]++;
+//        _textList[index].text = _numberList[index].ToString();
     }
     
     public void RemoveNumber(int index)

@@ -96,6 +96,9 @@ MonoBehaviour:
   _highlight: {fileID: 8277450709838565715}
   _idText: {fileID: 9156639522239365681}
   IsMoving: 0
+  _point:
+    x: 0
+    y: 0
 --- !u!1 &2390135146573997598
 GameObject:
   m_ObjectHideFlags: 0
@@ -184,7 +187,7 @@ GameObject:
   - component: {fileID: 7492692998573535888}
   - component: {fileID: 6764811800036777405}
   m_Layer: 5
-  m_Name: Image
+  m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -260,7 +263,7 @@ GameObject:
   - component: {fileID: 3452558656838854085}
   - component: {fileID: 9156639522239365681}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: IDText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -1,5 +1,6 @@
 using System;
 using DG.Tweening;
+using DG.Tweening.Core.Easing;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -7,94 +8,116 @@ using UnityEngine.UI;
 
 public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
+    #region ## Component ##
+
+    [SerializeField] private GameBoard _gameBoard;
     [SerializeField] private Image _background;
     [SerializeField] private Image _highlight;
     [SerializeField] private TextMeshProUGUI _idText;
-    private Color _color;
-
     private RectTransform _rectTransform;
+
+    #endregion
+
+    #region ## Property ##
+
+    private int _id = -1;
+    public int ID
+    {
+        get => _id;
+        set => _id = value;
+    }
+
+    private CommonDefinition.Point _point = new CommonDefinition.Point();
+    public CommonDefinition.Point Point
+    {
+        get => _point;
+        set => _point = value;
+    }
     
+    #endregion
+    
+    private Color _color;
     private float _width;
     private float _height;
     
     private Vector2 _touchPoint;
-    private float _minMagnitude = 20f;
-
     private bool _isClicked = false;
     public bool IsMoving = false;
-
-    private int _identity = -1;
-
-    [SerializeField] private CommonDefinition.Point _point = new CommonDefinition.Point();
+    
+    private float _minMagnitude = 20f;
 
     private void Awake()
     {
-        _rectTransform = GetComponent<RectTransform>();
+        Init();
+    }
+
+    private void Init()
+    {
+        if (_gameBoard == null)
+        {
+            _gameBoard = FindObjectOfType<GameBoard>();
+        }
+        
+        if (_background == null)
+        {
+            _background = Util.Find<Image>(transform, "Background");
+        }
+
+        if (_highlight == null)
+        {
+            _highlight = Util.Find<Image>(transform, "Highlight");
+        }
+
+        if (_idText == null)
+        {
+            _idText = Util.Find<TextMeshProUGUI>(transform, "IDText");
+        }
+        
+        if (_rectTransform == null)
+        {
+            _rectTransform = GetComponent<RectTransform>();
+        }
         _width = _rectTransform.sizeDelta.x;
         _height = _rectTransform.sizeDelta.y;
     }
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        if (_isClicked) return;
-        if (_identity == -1) return;
-        if (IsMoving) return;
+        if (!CanPressDown()) return;
         
         _isClicked = true;
-        
         _touchPoint = eventData.position;
-        
         _highlight.gameObject.SetActive(true);
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
-        if (!_isClicked) return;
-        if (IsMoving) return;
+        if (!CanPressUp()) return;
 
         var touchPoint = eventData.position;
 
         var dir = (touchPoint - _touchPoint).normalized;
         var mag = (touchPoint - _touchPoint).magnitude;
 
-        var nextPos = transform.localPosition;
         var x = 0;
         var y = 0;
         if (mag >= _minMagnitude)
         {
             if (Mathf.Abs(dir.x) >= Mathf.Abs(dir.y))
             {
-                if (dir.x > 0)
-                {
-                    x = 1;
-                    nextPos += new Vector3(50, 0);
-                }
-                else
-                {
-                    x = -1;
-                    nextPos += new Vector3(-50, 0);
-                }
+                if (dir.x > 0) x = 1;
+                else x = -1;
             } 
             else
             {
-                if (dir.y > 0)
-                {
-                    y = -1;
-                    nextPos += new Vector3(0, 50);
-                }
-                else
-                {
-                    y = 1;
-                    nextPos += new Vector3(0, -50);
-                }
+                if (dir.y > 0) y = -1;
+                else y = 1;
             }
-            
-            //GetComponent<RectTransform>().DOAnchorPos(nextPos, 0.5f);
             
             var board = FindObjectOfType<GameBoard>();
             
             var next = board.GetElement(_point.x + x, _point.y + y);
-            if (next.GetID() == -1)
+            if (next.ID == -1)
             {
                 _highlight.gameObject.SetActive(false);
                 _isClicked = false;
@@ -121,7 +144,7 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
 
         if (id != -1)
         {
-            _identity = id;
+            ID = id;
             _idText.text = id.ToString();
         }
     }
@@ -154,7 +177,7 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
         IsMoving = true;
 
         float diff = _rectTransform.localPosition.y - (num * _height);
-        GetComponent<RectTransform>().DOAnchorPosY(diff, 0.5f).OnComplete(() =>
+        _rectTransform.DOAnchorPosY(diff, 0.5f).OnComplete(() =>
         {
             _point += new CommonDefinition.Point(0, num);
             IsMoving = false;
@@ -171,13 +194,17 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
         return _point;
     }
 
-    public void SetID(int id)
+    public bool CanPressDown()
     {
-        _identity = id;
+        if (_isClicked || _id == -1 || IsMoving) return false;
+        
+        return true;
     }
-    
-    public int GetID()
+
+    public bool CanPressUp()
     {
-        return _identity;
+        if (!_isClicked || IsMoving) return false;
+
+        return true;
     }
 }

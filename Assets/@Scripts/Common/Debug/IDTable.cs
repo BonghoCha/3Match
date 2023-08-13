@@ -14,17 +14,21 @@ public class IDTable : MonoBehaviour
 
     void Update()
     {
-        var table = _gameBoard._gameTable;
-        for (int i = 0; i < table.Count; i++)
+        var table = _gameBoard._gameBoardElementTable;
+        for (int y = 0; y < table.Length; y++)
         {
-            _textList[i].text = table[i].ToString();
-            if (table[i] == -1)
+            for (int x = 0; x < table[y].Length; x++)
             {
-                _textList[i].color = new Color32(255, 0, 0, 255);
-            }
-            else
-            {
-                _textList[i].color = new Color32(0, 0, 0, 255);
+                int index = _gameBoard.GetIndex(x, y);
+                _textList[index].text = table[y][x].ID.ToString();
+                if (table[y][x].ID == -1)
+                {
+                    _textList[index].color = new Color32(255, 0, 0, 255);
+                }
+                else
+                {
+                    _textList[index].color = new Color32(0, 0, 0, 255);
+                }
             }
         }
     }

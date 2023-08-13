@@ -14,4 +14,9 @@ public class Util : MonoBehaviour
         
         return instance;
     }
+
+    public static T Find<T>(Transform root, string name) where T : Component
+    {
+        return root.Find(name) as T;
+    }
 }

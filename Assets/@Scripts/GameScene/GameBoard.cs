@@ -11,11 +11,10 @@ public class GameBoard : MonoBehaviour
     
     [Header("-- Game Board --")]
     [SerializeField] private List<GameBoardElement> _gameBoardElementList;
-
-    public List<int> _gameTable = new List<int>();
-    private List<int> _idList = new List<int>() { 1, 2, 3, 4, 5 };
+    public GameBoardElement[][] _gameBoardElementTable;
     
-    [SerializeField] private List<Color32> _colorList = new List<Color32>()
+    private List<int> _idList = new List<int>() { 1, 2, 3, 4, 5 };
+    private List<Color32> _colorList = new List<Color32>()
     {
         new Color32(200, 50, 50, 255),
         new Color32(50, 200, 50, 255),
@@ -24,8 +23,6 @@ public class GameBoard : MonoBehaviour
         new Color32(50, 200, 200, 255)
     };
     
-    private Dictionary<CommonDefinition.Point, GameBoardElement> _gameBoardElementDic = new Dictionary<CommonDefinition.Point, GameBoardElement>();
-
     private void Awake()
     {
         Initialize();
@@ -33,15 +30,18 @@ public class GameBoard : MonoBehaviour
 
     private void Initialize()
     {
+        _gameBoardElementTable = new GameBoardElement[YAxisLength][];
         for (int y = 0; y < YAxisLength; y++)
         {
+            _gameBoardElementTable[y] = new GameBoardElement[XAxisLength];
             for (int x = 0; x < XAxisLength; x++)
             {
                 var index = GetIndex(x, y);
-                var id = Random.Range(0, 5);
-                _gameBoardElementList[index].SetInfo(x, y, _idList[id]);
-                _gameBoardElementList[index].SetColor(_colorList[id]);
-                _gameTable.Add(id);
+                var id = _idList[Random.Range(0, 5)];
+                _gameBoardElementList[index].SetInfo(x, y, id);
+                _gameBoardElementList[index].SetColor(GetColor(id - 1));
+
+                _gameBoardElementTable[y][x] = _gameBoardElementList[index];
             }
         }
         
@@ -49,8 +49,7 @@ public class GameBoard : MonoBehaviour
         {
             for (int x = 0; x < XAxisLength; x++)
             {
-                int index = GetIndex(x, y);
-                if (_gameTable[index] == -1) continue;
+                if (_gameBoardElementTable[y][x].ID == -1) continue;
                 IsMatch(x, y);
             }
         }
@@ -67,85 +66,33 @@ public class GameBoard : MonoBehaviour
         int bX = pointB.x;
         int bY = pointB.y;
         
-        GameBoardElement tempElement = _gameBoardElementList[GetIndex(aX, aY)];
-        _gameBoardElementList[GetIndex(aX, aY)] = _gameBoardElementList[GetIndex(bX, bY)];
-        _gameBoardElementList[GetIndex(bX, bY)] = tempElement;
-        
-        b.SetInfo(aX, aY);
         a.SetInfo(bX, bY);
+        b.SetInfo(aX, aY);
         
         a.Move(b.GetPosition(), onCallback);
         b.Move(a.GetPosition());
 
-        int index1 = GetIndex(aX, aY);
-        int index2 = GetIndex(bX, bY);
-        (_gameTable[index1], _gameTable[index2]) = (_gameTable[index2], _gameTable[index1]);
+        (_gameBoardElementTable[aY][aX], _gameBoardElementTable[bY][bX]) = (_gameBoardElementTable[bY][bX], _gameBoardElementTable[aY][aX]);
     }
     
     public GameBoardElement GetElement(int x, int y)
     {
-        var index = GetIndex(x, y);
-        return _gameBoardElementList[index];
-    }
-
-    private int GetIndex(int x, int y)
-    {
-        return (XAxisLength * y) + x;
+        return _gameBoardElementTable[y][x];
     }
     
-    private int GetIndex(CommonDefinition.Point point)
+    public GameBoardElement GetElement(CommonDefinition.Point point)
     {
-        return (XAxisLength * point.y) + point.x;
+        return _gameBoardElementTable[point.y][point.x];
     }
 
-    public bool Check(GameBoardElement element1, GameBoardElement element2, CommonEnum.Direction direction)
+    public int GetIndex(int x, int y)
     {
-        int id = element1.GetID();
-        
-        int x1 = element1.GetPoint().x;
-        int y1 = element1.GetPoint().y;
-            
-        int x2 = element2.GetPoint().x;
-        int y2 = element2.GetPoint().y;
-        
-        if (direction == CommonEnum.Direction.HORIZONTAL)
-        {
-            for (int i = x1 - 2; i <= x2 + 2; i++)
-            {
-                if (i == x1 || i == x2) continue;
-                if (!isValid(i, y1)) continue;
-                if (!isSameLine(x1, y1, i, y1)) continue;
-
-                int nextID = GetElement(i, y1).GetID();
-                if (id == nextID)
-                {
-                    return true;
-                }
-            }
-        } 
-        else if (direction == CommonEnum.Direction.VERTICAL)
-        {
-            for (int i = y1 - 2; i <= y2 + 2; i++)
-            {
-                if (i == y1 || i == y2) continue;
-                if (!isValid(x1, i)) continue;
-                if (!isSameLine(x1, y1, x1, i)) continue;
-                
-                int nextID = GetElement(x1, i).GetID();
-                if (id == nextID)
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        return (XAxisLength * y) + x;
     }
 
     public bool IsMatch(int x, int y)
     {
-        int index = GetIndex(x, y);
-        int id = _gameTable[index];
+        int id = _gameBoardElementTable[y][x].ID;
         
         if (id == -1) return false;
         
@@ -154,82 +101,96 @@ public class GameBoard : MonoBehaviour
         bool up = true;
         bool down = true;
 
-        List<int> leftRemoveList = new List<int>();
-        List<int> rightRemoveList = new List<int>();
-        List<int> upRemoveList = new List<int>();
-        List<int> downRemoveList = new List<int>();
+        List<CommonDefinition.Point> leftRemoveList = new List<CommonDefinition.Point>();
+        List<CommonDefinition.Point> rightRemoveList = new List<CommonDefinition.Point>();
+        List<CommonDefinition.Point> upRemoveList = new List<CommonDefinition.Point>();
+        List<CommonDefinition.Point> downRemoveList = new List<CommonDefinition.Point>();
 
         int count = 1;
         while (left || right || up || down)
         {
             if (left)
             {
-                int leftIndex = isSameLine(x, y, x - count, y) ? GetIndex(x - count, y) : -1;
-                if (leftIndex == -1 || !isValid(x - count, y) || _gameTable[leftIndex] != id || _gameTable[leftIndex] == -1)
+                if (isSameLine(x, y, x - count, y))
                 {
-                    left = false;
-                }
-                else
-                {
-                    if (_gameTable[leftIndex] == id)
+                    GameBoardElement target = GetElement(x - count, y);
+                    if (target == null || !isValid(x - count, y) || target.ID != id || target.ID == -1)
                     {
-                        leftRemoveList.Add(leftIndex);
+                        left = false;
+                    }
+                    else
+                    {
+                        if (target.ID == id)
+                        {
+                            leftRemoveList.Add(new CommonDefinition.Point(x - count, y));
+                        }
                     }
                 }
             }
 
             if (right)
             {
-                int rightIndex = isSameLine(x, y, x + count, y) ? GetIndex(x + count, y) : -1;
-                if (rightIndex == -1 || !isValid(x + count, y)|| _gameTable[rightIndex] != id || _gameTable[rightIndex] == -1)
+                if (isSameLine(x, y, x + count, y))
                 {
-                    right = false;
-                }
-                else
-                {
-                    if (_gameTable[rightIndex] == id)
+                    GameBoardElement target = GetElement(x + count, y);
+                    if (target == null || !isValid(x + count, y) || target.ID != id || target.ID == -1)
                     {
-                        rightRemoveList.Add(rightIndex);
+                        right = false;
+                    }
+                    else
+                    {
+                        if (target.ID == id)
+                        {
+                            rightRemoveList.Add(new CommonDefinition.Point(x + count, y));
+                        }
                     }
                 }
             }
 
             if (up)
             {
-                int upIndex = isSameLine(x, y, x, y - count) ? GetIndex(x, y - count) : -1;
-                if (upIndex == -1 || !isValid(x, y - count)|| _gameTable[upIndex] != id || _gameTable[upIndex] == -1)
+                if (isSameLine(x, y, x, y - count))
                 {
-                    up = false;
-                }
-                else
-                {
-                    if (_gameTable[upIndex] == id)
+                    GameBoardElement target = GetElement(x, y - count);
+                    if (target == null || !isValid(x, y - count) || target.ID != id || target.ID == -1)
                     {
-                        upRemoveList.Add(upIndex);
+                        up = false;
+                    }
+                    else
+                    {
+                        if (target.ID == id)
+                        {
+                            upRemoveList.Add(new CommonDefinition.Point(x, y - count));
+                        }
                     }
                 }
             }
 
             if (down)
             {
-                int downIndex = isSameLine(x, y, x, y + count) ? GetIndex(x, y + count) : -1;
-                if (downIndex == -1 || !isValid(x, y + count)|| _gameTable[downIndex] != id || _gameTable[downIndex] == -1)
+                if (isSameLine(x, y, x, y + count))
                 {
-                    down = false;
-                }
-                else
-                {
-                    if (_gameTable[downIndex] == id)
+                    GameBoardElement target = GetElement(x, y + count);
+                    if (target == null || !isValid(x, y + count) || target.ID != id || target.ID == -1)
                     {
-                        downRemoveList.Add(downIndex);
+                        down = false;
+                    }
+                    else
+                    {
+                        if (target.ID == id)
+                        {
+                            downRemoveList.Add(new CommonDefinition.Point(x, y + count));
+                        }
                     }
                 }
             }
 
             count++;
+
+            if (count >= XAxisLength && count >= YAxisLength) break;
         }
 
-        List<int> removeList = new List<int>();
+        List<CommonDefinition.Point> removeList = new List<CommonDefinition.Point>();
         if (leftRemoveList.Count + rightRemoveList.Count >= 2)
         {
             removeList.AddRange(leftRemoveList);
@@ -243,17 +204,17 @@ public class GameBoard : MonoBehaviour
         
         if (removeList.Count > 0)
         {
-            removeList.Add(index);
+            removeList.Add(_gameBoardElementTable[y][x].Point);
         }
         
         for (int i = 0; i < removeList.Count; i++)
         {
-            _gameBoardElementList[removeList[i]].SetColor(new Color32(0, 0, 0, 255));
-            _gameBoardElementList[removeList[i]].SetID(-1);
-            _gameBoardElementList[removeList[i]].gameObject.SetActive(false);
-            _gameTable[removeList[i]] = -1;
+            var removeTarget = GetElement(removeList[i]);
+            removeTarget.SetColor(new Color32(0, 0, 0, 255));
+            removeTarget.ID = -1;
+            removeTarget.gameObject.SetActive(false);
 
-            FindObjectOfType<RemoveTable>().AddNumber(removeList[i] % XAxisLength);
+            FindObjectOfType<RemoveTable>().AddNumber(GetIndex(removeList[i].x, removeList[i].y));
         }
 
         testList.AddRange(removeList);
@@ -261,7 +222,7 @@ public class GameBoard : MonoBehaviour
         return false;
     }
 
-    public List<int> testList = new List<int>();
+    public List<CommonDefinition.Point> testList = new List<CommonDefinition.Point>();
     public void Test()
     {
         Debug.Log("실행 " + testList.Count);
@@ -271,28 +232,14 @@ public class GameBoard : MonoBehaviour
             for (int y = YAxisLength - 1; y >= 0; y--)
             {
                 int index = GetIndex(x, y);
-                if (_gameBoardElementList[index].GetID() == -1)
+                if (_gameBoardElementTable[y][x].ID == -1)
                 {
                     num++;
                     continue;
                 }
                 
-                _gameBoardElementList[index].MoveY(num);
+                _gameBoardElementTable[y][x].MoveY(num);
             }
-        }
-
-        UpdateIDTable();
-    }
-
-    private void UpdateIDTable()
-    {
-        for (int i = 0; i < _gameBoardElementList.Count; i++)
-        {
-            int id = _gameBoardElementList[i].GetID();
-            int index = GetIndex(_gameBoardElementList[i].GetPoint());
-            if (id == -1) continue;
-            _gameTable[i] = -1;
-            _gameTable[index] = id;
         }
     }
     
@@ -311,9 +258,15 @@ public class GameBoard : MonoBehaviour
 
     private bool isValid(int x, int y)
     {
-        int index = GetIndex(x, y);
-        if (index < 0 || index >= _gameBoardElementList.Count) return false;
+        if (x < 0 || x >= XAxisLength) return false;
+        if (y < 0 || y >= YAxisLength) return false;
         
         return true;
+    }
+
+    public Color32 GetColor(int id)
+    {
+        Debug.Log(id);
+        return _colorList[id];
     }
 }
