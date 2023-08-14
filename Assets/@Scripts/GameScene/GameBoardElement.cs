@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+[Serializable]
 public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
     #region ## Component ##
@@ -30,7 +31,14 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
     private CommonDefinition.Point _point = new CommonDefinition.Point();
     public CommonDefinition.Point Point
     {
-        get => _point;
+        get
+        {
+            if (_point == null)
+            {
+                _point = new CommonDefinition.Point();
+            }
+            return _point;
+        }
         set => _point = value;
     }
     
@@ -116,7 +124,7 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
             
             var board = FindObjectOfType<GameBoard>();
             
-            var next = board.GetElement(_point.x + x, _point.y + y);
+            var next = board.GetElement(Point.x + x, Point.y + y);
             if (next.ID == -1)
             {
                 _highlight.gameObject.SetActive(false);
@@ -128,8 +136,8 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
             {
                 board.Swap(this, next, () =>
                 {
-                    board.IsMatch(_point.x, _point.y);
-                    board.IsMatch(_point.x - x, _point.y - y);
+                    board.IsMatch(Point.x, Point.y);
+                    board.IsMatch(Point.x - x, Point.y - y);
                 });
             }
         }
@@ -140,7 +148,8 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
     
     public void SetInfo(int x, int y, int id = -1)
     {
-        _point.SetInfo(x, y);
+        Point.x = x;
+        Point.y = y;
 
         if (id != -1)
         {
@@ -154,10 +163,12 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
         _background.color = color;
     }
 
-    public void Move(Vector2 pos, Action onCallback = null)
+    public void Move(Action onCallback = null)
     {
+        Debug.Log(this.gameObject.name + " = > " +Point.x +" ,"+Point.y);
+        var targetPos = new Vector2(_width * Point.x, _height * -Point.y);
         IsMoving = true;
-        GetComponent<RectTransform>().DOAnchorPos(pos, 0.5f).OnComplete(() =>
+        _rectTransform.DOAnchorPos(targetPos, 0.5f).OnComplete(() =>
         {
             IsMoving = false;
             if (onCallback != null)
@@ -176,10 +187,9 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
     {
         IsMoving = true;
 
-        float diff = _rectTransform.localPosition.y - (num * _height);
-        _rectTransform.DOAnchorPosY(diff, 0.5f).OnComplete(() =>
+        var targetPos = GetNewPosition(0, num);
+        _rectTransform.DOAnchorPosY(targetPos.y, 0.5f).OnComplete(() =>
         {
-            _point += new CommonDefinition.Point(0, num);
             IsMoving = false;
         });
     }
@@ -189,11 +199,14 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
         return GetComponent<RectTransform>().localPosition;
     }
 
-    public CommonDefinition.Point GetPoint()
+    public Vector2 GetNewPosition(int x, int y)
     {
-        return _point;
-    }
+        Point += new CommonDefinition.Point(x, y);
+        var targetPos = new Vector2(_width * (Point.x), _height * -Point.y);
 
+        return targetPos;
+    }
+    
     public bool CanPressDown()
     {
         if (_isClicked || _id == -1 || IsMoving) return false;

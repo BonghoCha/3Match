@@ -92,13 +92,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83be693d6188b674bba479295b6b1810, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _gameBoard: {fileID: 0}
   _background: {fileID: 6764811800036777405}
   _highlight: {fileID: 8277450709838565715}
   _idText: {fileID: 9156639522239365681}
   IsMoving: 0
-  _point:
-    x: 0
-    y: 0
 --- !u!1 &2390135146573997598
 GameObject:
   m_ObjectHideFlags: 0

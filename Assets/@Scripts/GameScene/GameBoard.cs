@@ -11,7 +11,7 @@ public class GameBoard : MonoBehaviour
     
     [Header("-- Game Board --")]
     [SerializeField] private List<GameBoardElement> _gameBoardElementList;
-    public GameBoardElement[][] _gameBoardElementTable;
+    [SerializeField] public GameBoardElement[][] _gameBoardElementTable;
     
     private List<int> _idList = new List<int>() { 1, 2, 3, 4, 5 };
     private List<Color32> _colorList = new List<Color32>()
@@ -57,22 +57,27 @@ public class GameBoard : MonoBehaviour
 
     public void Swap(GameBoardElement a, GameBoardElement b, Action onCallback = null)
     {
-        var pointA = a.GetPoint();
-        var pointB = b.GetPoint();
+        SwapInfo(a, b);
 
-        int aX = pointA.x;
-        int aY = pointA.y;
+        a.Move(onCallback);
+        b.Move();
+
+    }
+
+    public void SwapInfo(GameBoardElement a, GameBoardElement b)
+    {
+        var pointA = a.Point;
+        var pointB = b.Point;
+
+        var aX = pointA.x;
+        var aY = pointA.y;
         
-        int bX = pointB.x;
-        int bY = pointB.y;
-        
-        a.SetInfo(bX, bY);
+        var bX = pointB.x;
+        var bY = pointB.y;
+        a.SetInfo(bX,bY);
         b.SetInfo(aX, aY);
-        
-        a.Move(b.GetPosition(), onCallback);
-        b.Move(a.GetPosition());
 
-        (_gameBoardElementTable[aY][aX], _gameBoardElementTable[bY][bX]) = (_gameBoardElementTable[bY][bX], _gameBoardElementTable[aY][aX]);
+        (_gameBoardElementTable[pointA.y][pointA.x], _gameBoardElementTable[pointB.y][pointB.x]) = (_gameBoardElementTable[pointB.y][pointB.x], _gameBoardElementTable[pointA.y][pointA.x]);
     }
     
     public GameBoardElement GetElement(int x, int y)
@@ -231,18 +236,17 @@ public class GameBoard : MonoBehaviour
             int num = 0;
             for (int y = YAxisLength - 1; y >= 0; y--)
             {
-                int index = GetIndex(x, y);
                 if (_gameBoardElementTable[y][x].ID == -1)
                 {
                     num++;
                     continue;
                 }
-                
                 _gameBoardElementTable[y][x].MoveY(num);
+                (_gameBoardElementTable[y][x], _gameBoardElementTable[y + num][x]) = (_gameBoardElementTable[y + num][x], _gameBoardElementTable[y][x]);  
             }
         }
     }
-    
+
     private bool isSameLine(int x1, int y1, int x2, int y2)
     {
         if (x1 < 0 || x1 >= XAxisLength || x2 < 0 || x2 >= XAxisLength) return false;
