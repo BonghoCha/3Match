@@ -12,7 +12,8 @@ public class GameBoard : MonoBehaviour
     [Header("-- Game Board --")]
     [SerializeField] private List<GameBoardElement> _gameBoardElementList;
     [SerializeField] public GameBoardElement[][] _gameBoardElementTable;
-    
+    private List<CommonDefinition.Point> _removeList = new List<CommonDefinition.Point>();
+
     private List<int> _idList = new List<int>() { 1, 2, 3, 4, 5 };
     private List<Color32> _colorList = new List<Color32>()
     {
@@ -36,12 +37,7 @@ public class GameBoard : MonoBehaviour
             _gameBoardElementTable[y] = new GameBoardElement[XAxisLength];
             for (int x = 0; x < XAxisLength; x++)
             {
-                var index = GetIndex(x, y);
-                var id = _idList[Random.Range(0, 5)];
-                _gameBoardElementList[index].SetInfo(x, y, id);
-                _gameBoardElementList[index].SetColor(GetColor(id - 1));
-
-                _gameBoardElementTable[y][x] = _gameBoardElementList[index];
+                Generate(x, y);
             }
         }
         
@@ -53,6 +49,16 @@ public class GameBoard : MonoBehaviour
                 IsMatch(x, y);
             }
         }
+    }
+
+    private void Generate(int x, int y)
+    {
+        var index = GetIndex(x, y);
+        var id = _idList[Random.Range(0, 5)];
+        _gameBoardElementTable[y][x] = _gameBoardElementList[index];
+        _gameBoardElementTable[y][x].SetInfo(x, y, id);
+        _gameBoardElementTable[y][x].SetColor(GetColor(id - 1));
+        _gameBoardElementTable[y][x].gameObject.SetActive(true);
     }
 
     public void Swap(GameBoardElement a, GameBoardElement b, Action onCallback = null)
@@ -116,7 +122,7 @@ public class GameBoard : MonoBehaviour
         {
             if (left)
             {
-                if (isSameLine(x, y, x - count, y))
+                if (IsSameLine(x, y, x - count, y))
                 {
                     GameBoardElement target = GetElement(x - count, y);
                     if (target == null || !isValid(x - count, y) || target.ID != id || target.ID == -1)
@@ -135,7 +141,7 @@ public class GameBoard : MonoBehaviour
 
             if (right)
             {
-                if (isSameLine(x, y, x + count, y))
+                if (IsSameLine(x, y, x + count, y))
                 {
                     GameBoardElement target = GetElement(x + count, y);
                     if (target == null || !isValid(x + count, y) || target.ID != id || target.ID == -1)
@@ -154,7 +160,7 @@ public class GameBoard : MonoBehaviour
 
             if (up)
             {
-                if (isSameLine(x, y, x, y - count))
+                if (IsSameLine(x, y, x, y - count))
                 {
                     GameBoardElement target = GetElement(x, y - count);
                     if (target == null || !isValid(x, y - count) || target.ID != id || target.ID == -1)
@@ -173,7 +179,7 @@ public class GameBoard : MonoBehaviour
 
             if (down)
             {
-                if (isSameLine(x, y, x, y + count))
+                if (IsSameLine(x, y, x, y + count))
                 {
                     GameBoardElement target = GetElement(x, y + count);
                     if (target == null || !isValid(x, y + count) || target.ID != id || target.ID == -1)
@@ -195,42 +201,39 @@ public class GameBoard : MonoBehaviour
             if (count >= XAxisLength && count >= YAxisLength) break;
         }
 
-        List<CommonDefinition.Point> removeList = new List<CommonDefinition.Point>();
         if (leftRemoveList.Count + rightRemoveList.Count >= 2)
         {
-            removeList.AddRange(leftRemoveList);
-            removeList.AddRange(rightRemoveList);
+            _removeList.AddRange(leftRemoveList);
+            _removeList.AddRange(rightRemoveList);
         }
         if (upRemoveList.Count + downRemoveList.Count >= 2)
         {
-            removeList.AddRange(upRemoveList);
-            removeList.AddRange(downRemoveList);
+            _removeList.AddRange(upRemoveList);
+            _removeList.AddRange(downRemoveList);
         }
         
-        if (removeList.Count > 0)
+        if (_removeList.Count > 0)
         {
-            removeList.Add(_gameBoardElementTable[y][x].Point);
+            _removeList.Add(_gameBoardElementTable[y][x].Point);
         }
         
-        for (int i = 0; i < removeList.Count; i++)
+        for (int i = 0; i < _removeList.Count; i++)
         {
-            var removeTarget = GetElement(removeList[i]);
+            var removeTarget = GetElement(_removeList[i]);
             removeTarget.SetColor(new Color32(0, 0, 0, 255));
             removeTarget.ID = -1;
             removeTarget.gameObject.SetActive(false);
 
-            FindObjectOfType<RemoveTable>().AddNumber(GetIndex(removeList[i].x, removeList[i].y));
+            FindObjectOfType<RemoveTable>().AddNumber(GetIndex(_removeList[i].x, _removeList[i].y));
         }
+        _removeList.Clear();
 
-        testList.AddRange(removeList);
-
+        SortBlocks();
         return false;
     }
 
-    public List<CommonDefinition.Point> testList = new List<CommonDefinition.Point>();
-    public void Test()
+    public void SortBlocks()
     {
-        Debug.Log("실행 " + testList.Count);
         for (int x = 0; x < XAxisLength; x++)
         {
             int num = 0;
@@ -242,12 +245,29 @@ public class GameBoard : MonoBehaviour
                     continue;
                 }
                 _gameBoardElementTable[y][x].MoveY(num);
+                _gameBoardElementTable[y][x].SetInfo(x, y + num);
+                _gameBoardElementTable[y + num][x].SetInfo(x, y);
                 (_gameBoardElementTable[y][x], _gameBoardElementTable[y + num][x]) = (_gameBoardElementTable[y + num][x], _gameBoardElementTable[y][x]);  
             }
         }
     }
 
-    private bool isSameLine(int x1, int y1, int x2, int y2)
+    public void Regenerate()
+    {
+        for (int x = 0; x < XAxisLength; x++)
+        {
+            int num = 0;
+            for (int y = YAxisLength - 1; y >= 0; y--)
+            {
+                if (_gameBoardElementTable[y][x].ID == -1)
+                {
+                    Generate(x, y);
+                }
+            }
+        }
+    }
+
+    private bool IsSameLine(int x1, int y1, int x2, int y2)
     {
         if (x1 < 0 || x1 >= XAxisLength || x2 < 0 || x2 >= XAxisLength) return false;
         if (y1 < 0 || y1 >= YAxisLength || y2 < 0 || y2 >= YAxisLength) return false;

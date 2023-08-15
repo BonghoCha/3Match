@@ -165,7 +165,6 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
 
     public void Move(Action onCallback = null)
     {
-        Debug.Log(this.gameObject.name + " = > " +Point.x +" ,"+Point.y);
         var targetPos = new Vector2(_width * Point.x, _height * -Point.y);
         IsMoving = true;
         _rectTransform.DOAnchorPos(targetPos, 0.5f).OnComplete(() =>
@@ -183,6 +182,7 @@ public class GameBoardElement : MonoBehaviour, IPointerDownHandler, IPointerUpHa
     {
         MoveY(-1);
     }
+    
     public void MoveY(int num, Action onCallback = null)
     {
         IsMoving = true;
